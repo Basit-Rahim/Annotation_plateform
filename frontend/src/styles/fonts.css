@@ -1,0 +1,7 @@
+/* Bundled locally: no Google Fonts CDN (field connectivity in Pakistan). */
+@font-face {
+  font-family: 'Noto Nastaliq Urdu';
+  src: url('../fonts/NotoNastaliqUrdu-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
