@@ -152,3 +152,11 @@ textarea.transcript {
 .ins-chip { display: inline-flex; align-items: center; gap: 0.3rem; border: 1px dashed var(--accent); border-radius: 6px; padding: 0 0.5rem; background: #fff; }
 .ins-chip .urdu { font-size: 18px; line-height: 2; }
 .slot input.urdu { font-size: 18px; line-height: 1.8; padding: 0 0.5rem; width: 14rem; }
+
+/* Top bar + waveform stay pinned while the transcript / word list scrolls. */
+.workspace-head {
+  position: sticky; top: 0; z-index: 10; background: var(--bg);
+  margin: -1.5rem -2rem 0; padding: 1.5rem 2rem 0; box-shadow: 0 6px 8px -8px rgba(16, 24, 40, 0.35);
+}
+.workspace-head .topbar { position: static; }
+.workspace-head .panel:last-child { margin-bottom: 0.75rem; }

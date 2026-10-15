@@ -147,19 +147,21 @@ export function Layer1() {
 
   return (
     <>
-      <TaskTopBar
-        task={task}
-        title="Layer 1 · Verbatim transcript"
-        canSubmit={canSubmit}
-        busy={busy}
-        hint={hint}
-        onRelease={release}
-        onSubmit={submit}
-      />
-      <Alert kind="error">{lost && <>{lost} <Link to="/queue">Back to my queue</Link></>}</Alert>
-      <Alert kind="error">{error}</Alert>
-      <div className="panel">
-        <Waveform url={API_BASE + task.audio_url} marks={marks} onMarkChange={setMark} />
+      <div className="workspace-head">
+        <TaskTopBar
+          task={task}
+          title="Layer 1 · Verbatim transcript"
+          canSubmit={canSubmit}
+          busy={busy}
+          hint={hint}
+          onRelease={release}
+          onSubmit={submit}
+        />
+        <Alert kind="error">{lost && <>{lost} <Link to="/queue">Back to my queue</Link></>}</Alert>
+        <Alert kind="error">{error}</Alert>
+        <div className="panel">
+          <Waveform url={API_BASE + task.audio_url} marks={marks} onMarkChange={setMark} />
+        </div>
       </div>
       <div className="panel">
         <div className="row" style={{ marginBottom: '0.5rem' }}>
