@@ -1,0 +1,24 @@
+# DOMAIN comes from .env. A real domain gets a Let's Encrypt certificate
+# automatically (ports 80 and 443 must be open and DNS must point here);
+# DOMAIN=localhost uses Caddy's internal certificate for a local trial.
+{$DOMAIN} {
+	encode zstd gzip
+
+	handle /api/* {
+		reverse_proxy api:8000
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "same-origin"
+		-Server
+	}
+}
