@@ -65,6 +65,20 @@ services:
       - caddy_data:/data
       - caddy_config:/config
 
+  # Nightly pg_dump + audio archive into ./backups (see deploy/backup.sh).
+  backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./deploy/backup.sh:/backup.sh:ro
+      - ./backups:/backups
+      - ./data/audio:/data/audio:ro
+    entrypoint: ["sh", "/backup.sh"]
+
 volumes:
   pg_data:
   caddy_data:
