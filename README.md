@@ -7,8 +7,7 @@ These annotations are the ground truth for checking whether ASR can replace huma
 
 ## Prerequisites
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (with Docker Compose v2)
-- Python 3.11+ and Node 20+ only if you want to run tests or develop outside Docker
+- [uv](https://docs.astral.sh/uv/) for local development, or [Docker](https://docs.docker.com/get-docker/) with Compose v2
 
 ## Run locally without Docker
 
@@ -25,7 +24,7 @@ Press Ctrl+C to stop everything.
 To run the tests, start only the database with `uv run dev.py db`, run `cd backend && uv run pytest`, then `uv run dev.py stop`.
 Delete `.local/` to reset the database.
 
-## Setup (Docker, as on the server)
+## Run with Docker (development)
 
 ```bash
 cp .env.example .env
@@ -51,6 +50,44 @@ This starts three services:
 - **postgres** (Postgres 16, initialised from the `.env` credentials)
 - **api** (FastAPI on http://localhost:8000; runs migrations and creates the admin account on start)
 - **web** (React UI on http://localhost:5173)
+
+## Deploying to a server
+
+Production uses `docker-compose.prod.yml`: Caddy serves the built UI over HTTPS and proxies `/api` to the API.
+Postgres and the API are not reachable from outside, and a backup service writes nightly copies to `backups/`.
+
+**Server:** Ubuntu 24.04 with Docker, 2 vCPU, 4 GB RAM, and disk for the audio (about 1 MB per 60-second recording).
+Open only ports 22, 80 and 443. Point the domain's DNS A record at the server's IP before the first start.
+
+```bash
+git clone https://github.com/Basit-Rahim/Annotation_plateform.git /opt/annotation
+cd /opt/annotation
+cp .env.example .env
+```
+
+In `.env`, set `DOMAIN` and `ADMIN_EMAIL`, and generate `POSTGRES_PASSWORD`, `SECRET_KEY` and `ADMIN_PASSWORD`
+with `openssl rand -hex 32`. Put the same database password inside `DATABASE_URL`, which keeps the host `postgres`.
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml ps        # all services running, api healthy
+```
+
+Migrations and the admin account are applied on every start. Caddy fetches the HTTPS certificate on the first request,
+so give it a minute, then open `https://<DOMAIN>`.
+
+**Updating:** `git pull`, then the same `up -d --build` command.
+
+**Adding audio:** copy files into `/opt/annotation/data/incoming/` (for example with `scp` or SFTP), then use **Ingest audio**.
+
+**Backups:** `backups/` holds a database dump (`db-*.dump`) and an audio archive (`audio-*.tar.gz`) per day,
+kept for `BACKUP_KEEP_DAYS`. Copy them off the server regularly. To restore the database:
+
+```bash
+docker compose -f docker-compose.prod.yml exec -T postgres   pg_restore --clean --if-exists -U <POSTGRES_USER> -d <POSTGRES_DB> < backups/db-<stamp>.dump
+```
+
+**Logs:** `docker compose -f docker-compose.prod.yml logs -f api` (or `web`, `backup`).
 
 ## First-run flow
 
