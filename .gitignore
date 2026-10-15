@@ -1,11 +1,36 @@
+# --- Secrets / local config ---
 .env
+.env.*
+!.env.example
+
+# --- Local runtime state (dev.py) ---
+.local/
 data/
-node_modules/
+*.log
+
+# --- Python ---
 __pycache__/
-*.pyc
-.pytest_cache/
-dist/
-*.egg-info/
+*.py[cod]
 .venv/
 venv/
+*.egg-info/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Node / frontend ---
+node_modules/
+dist/
 *.tsbuildinfo
+.vite/
+npm-debug.log*
+
+# --- Editors / OS ---
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

@@ -10,7 +10,22 @@ These annotations are the ground truth for checking whether ASR can replace huma
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (with Docker Compose v2)
 - Python 3.11+ and Node 20+ only if you want to run tests or develop outside Docker
 
-## Setup
+## Run locally without Docker
+
+Only [uv](https://docs.astral.sh/uv/) is needed. Python, Postgres 16 (the `pgserver` wheel) and Node (the `nodejs-wheel` wheel) all come through uv, so nothing is installed system-wide.
+
+```bash
+uv run dev.py
+```
+
+The first run creates a local-only `.env` (admin password `admin`), a Postgres cluster in `.local/pgdata` on port 5433, `backend/.venv` and `frontend/node_modules`.
+It then runs migrations and the admin seed, and starts the API on :8000 (or the next free port) and the UI on http://localhost:5173.
+Press Ctrl+C to stop everything.
+
+To run the tests, start only the database with `uv run dev.py db`, run `cd backend && uv run pytest`, then `uv run dev.py stop`.
+Delete `.local/` to reset the database.
+
+## Setup (Docker, as on the server)
 
 ```bash
 cp .env.example .env
