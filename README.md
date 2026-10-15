@@ -53,6 +53,8 @@ This starts three services:
 
 ## Deploying to a server
 
+For a step-by-step Google Cloud runbook (Console only), see [docs/deploy-gcp.md](docs/deploy-gcp.md).
+
 Production uses `docker-compose.prod.yml`: Caddy serves the built UI over HTTPS and proxies `/api` to the API.
 Postgres and the API are not reachable from outside, and a backup service writes nightly copies to `backups/`.
 
