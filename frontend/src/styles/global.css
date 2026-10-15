@@ -160,3 +160,7 @@ textarea.transcript {
 }
 .workspace-head .topbar { position: static; }
 .workspace-head .panel:last-child { margin-bottom: 0.75rem; }
+
+.save-state { font-size: 0.8rem; color: var(--muted); }
+.save-state.saved { color: var(--ok); }
+.save-state.offline, .save-state.rejected { color: var(--err); font-weight: 600; }

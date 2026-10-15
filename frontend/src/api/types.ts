@@ -71,6 +71,16 @@ export interface Task {
   tokens: Token[] | null
 }
 
+export interface DraftOut {
+  payload: unknown
+  updated_at: string
+}
+
+export interface DraftSaved {
+  updated_at: string
+  lease_expires_at: string | null
+}
+
 export interface Marks {
   first: number | null
   last: number | null

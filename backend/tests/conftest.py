@@ -87,7 +87,7 @@ def _database():
 
 TABLES = (
     "annotation_layer_2_insertion, annotation_layer_2_word, annotation_layer_2, annotation_layer_1, "
-    "tasks, recordings, passage_tokens, passages, audit_log, users"
+    "task_drafts, tasks, recordings, passage_tokens, passages, audit_log, users"
 )
 
 

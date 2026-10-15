@@ -8,8 +8,8 @@ from app.auth import client_ip, require_annotator
 from app.db import get_db
 from app.models import Passage, PassageToken, Recording, Task, User
 from app.models.task import LAYER_2
-from app.schemas import Layer, TaskOut, TokenOut
-from app.services import checkout
+from app.schemas import DraftIn, DraftOut, DraftSaved, Layer, TaskOut, TokenOut
+from app.services import checkout, drafts
 
 router = APIRouter(prefix="/api", tags=["annotator: tasks"])
 
@@ -61,3 +61,19 @@ def release(
     db: Session = Depends(get_db), user: User = Depends(require_annotator),
 ) -> None:
     checkout.release(db, user, task_id, client_ip(request))
+
+
+@router.get("/tasks/{task_id}/draft", response_model=DraftOut | None)
+def get_draft(
+    task_id: uuid.UUID, db: Session = Depends(get_db), user: User = Depends(require_annotator),
+) -> DraftOut | None:
+    draft = drafts.get_draft(db, user, task_id)
+    return DraftOut(payload=draft.payload, updated_at=draft.updated_at) if draft else None
+
+
+@router.put("/tasks/{task_id}/draft", response_model=DraftSaved)
+def save_draft(
+    task_id: uuid.UUID, body: DraftIn, db: Session = Depends(get_db), user: User = Depends(require_annotator),
+) -> DraftSaved:
+    updated_at, task = drafts.save_draft(db, user, task_id, body.payload)
+    return DraftSaved(updated_at=updated_at, lease_expires_at=task.lease_expires_at)

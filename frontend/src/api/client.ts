@@ -1,4 +1,4 @@
-import type { Layer, Me, Passage, RecordingRow, ScanFile, Stats, Task, UserRow } from './types'
+import type { DraftOut, DraftSaved, Layer, Me, Passage, RecordingRow, ScanFile, Stats, Task, UserRow } from './types'
 
 export const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '')
 
@@ -36,6 +36,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 const get = <T>(path: string) => request<T>('GET', path)
 const post = <T>(path: string, body?: unknown) => request<T>('POST', path, body ?? {})
 const patch = <T>(path: string, body: unknown) => request<T>('PATCH', path, body)
+const put = <T>(path: string, body: unknown) => request<T>('PUT', path, body)
 
 export const api = {
   login: (email: string, password: string) => post<Me>('/api/auth/login', { email, password }),
@@ -65,6 +66,8 @@ export const api = {
   currentTask: () => get<Task | null>('/api/tasks/current'),
   release: (taskId: string) => post<void>(`/api/tasks/${taskId}/release`),
   submit: (taskId: string, layer: Layer, body: unknown) => post(`/api/tasks/${taskId}/submit/${layer}`, body),
+  getDraft: (taskId: string) => get<DraftOut | null>(`/api/tasks/${taskId}/draft`),
+  saveDraft: (taskId: string, payload: unknown) => put<DraftSaved>(`/api/tasks/${taskId}/draft`, { payload }),
 }
 
 /** Download the export as a file, keeping the server-provided filename. */

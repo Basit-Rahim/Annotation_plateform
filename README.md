@@ -70,13 +70,15 @@ Copy a few short `.wav` or `.mp3` files into `data/incoming/`. `.m4a`, `.ogg`, `
 ## How annotation works
 
 - **Take next** assigns the oldest available task for that layer. Annotators can't browse or pick tasks.
-- Each annotator can hold one task at a time. The task is leased for 120 minutes (`LEASE_DURATION_MINUTES`).
-  A background job returns expired leases to the pool every minute.
-- **Submit** saves the annotation. **Release** returns the task to the pool and discards the draft.
+- Each annotator can hold one task at a time. The lease runs for 120 minutes (`LEASE_DURATION_MINUTES`) after the last edit,
+  so it never runs out while someone is working. A background job returns expired leases to the pool every minute.
+- **Work in progress is always saved**, in both layers: to the browser on every change and to the server a moment later
+  (status shown in the top bar). If the tab closes, the browser crashes or the connection drops, reopening the task restores it.
+  If a lease lapses, the draft is kept and **Take next** gives that annotator their unfinished task back first.
+- **Submit** saves the annotation. **Release** returns the task to the pool and discards the saved draft.
 - Both workspaces have a waveform with three draggable marks: first word (green), last word (red) and the 60 s boundary (blue).
   The buttons under the waveform place each mark at the playhead.
 - **Layer 1**: a right-to-left Nastaliq editor with buttons that insert `[unintelligible]`, `[non-target speech]` and `[code-switch]`.
-  The draft autosaves to the browser every 5 seconds and is restored if you reopen the same task.
 - **Layer 2**: one row per printed word, with a Correct/Error chip and the closed Annex E.1 error-tag list.
   Use **+ Insert word here** between rows to record words the child added (INS).
 - An admin can withdraw a recording from the Dashboard. This deletes the audio, cancels its tasks, and excludes it from exports.

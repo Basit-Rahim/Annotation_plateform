@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from decimal import ROUND_HALF_UP, Decimal
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -150,6 +150,20 @@ class TaskOut(BaseModel):
     audio_url: str
     # Only populated for layer_2: Layer 1 transcribers never see the passage.
     tokens: list[TokenOut] | None = None
+
+
+class DraftIn(BaseModel):
+    payload: dict[str, Any]
+
+
+class DraftOut(BaseModel):
+    payload: dict[str, Any]
+    updated_at: datetime
+
+
+class DraftSaved(BaseModel):
+    updated_at: datetime
+    lease_expires_at: datetime | None
 
 
 def _seconds(value: Decimal) -> Decimal:

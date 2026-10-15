@@ -28,7 +28,7 @@ export function useWorkspaceTask(taskId: string | undefined, layer: Layer) {
           setLost(
             initial
               ? 'This task is not checked out to you.'
-              : 'This task is no longer checked out to you: it was withdrawn by an admin or your lease expired. Your work was not submitted.',
+              : 'This task is no longer checked out to you: it was withdrawn by an admin or your lease expired. Your work so far is saved; if the task is still in the pool, Take next gives it back to you first.',
           )
         }
       } catch (err) {

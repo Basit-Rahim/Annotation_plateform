@@ -5,28 +5,48 @@ import { marksComplete, marksPayload, type MarkKey, type Marks } from '../api/ty
 import { Alert } from '../components/Alert'
 import { isJudged, PassageGrid, type Judgement } from '../components/PassageGrid'
 import { TaskTopBar } from '../components/TaskTopBar'
+import { useTaskDraft } from '../components/useTaskDraft'
 import { useWorkspaceTask } from '../components/useWorkspaceTask'
 import { Waveform } from '../components/Waveform'
+
+const NO_MARKS: Marks = { first: null, last: null, boundary: null }
+
+interface Draft {
+  marks: Marks
+  judgements: Record<number, Judgement>
+  insertions: Record<number, string[]>
+}
 
 export function Layer2() {
   const { taskId } = useParams()
   const navigate = useNavigate()
   const { task, loading, lost } = useWorkspaceTask(taskId, 'layer_2')
-  const [marks, setMarks] = useState<Marks>({ first: null, last: null, boundary: null })
+  const [marks, setMarks] = useState<Marks>(NO_MARKS)
   const [judgements, setJudgements] = useState<Record<number, Judgement>>({})
   const [insertions, setInsertions] = useState<Record<number, string[]>>({})
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const draft = useTaskDraft<Draft>(
+    task?.id,
+    { marks, judgements, insertions },
+    (saved) => {
+      setMarks({ ...NO_MARKS, ...saved.marks })
+      setJudgements(saved.judgements ?? {})
+      setInsertions(saved.insertions ?? {})
+    },
+    !lost,
+  )
 
   function setMark(key: MarkKey, seconds: number) {
     setMarks((m) => ({ ...m, [key]: seconds }))
   }
 
   async function release() {
-    if (!task || !window.confirm('Release this task? Your judgements will be discarded.')) return
+    if (!task || !window.confirm('Release this task? Your saved judgements will be discarded.')) return
     setBusy(true)
     try {
       await api.release(task.id)
+      draft.discard()
       navigate('/queue', { state: { flash: 'Task released back to the pool.' } })
     } catch (err) {
       setError(errorMessage(err))
@@ -51,6 +71,7 @@ export function Layer2() {
     }
     try {
       await api.submit(task.id, 'layer_2', body)
+      draft.discard()
       navigate('/queue', { state: { flash: 'Layer 2 scoring submitted. Thank you!' } })
     } catch (err) {
       setError(errorMessage(err))
@@ -58,7 +79,7 @@ export function Layer2() {
     }
   }
 
-  if (loading) return <p className="muted">Loading task…</p>
+  if (loading || (task && !draft.restored)) return <p className="muted">Loading task…</p>
   if (!task?.tokens) {
     return (
       <>
@@ -88,6 +109,7 @@ export function Layer2() {
           hint={hint}
           onRelease={release}
           onSubmit={submit}
+          saveState={draft.state}
         />
         <Alert kind="error">{lost && <>{lost} <Link to="/queue">Back to my queue</Link></>}</Alert>
         <Alert kind="error">{error}</Alert>

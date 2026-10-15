@@ -5,6 +5,7 @@ from app.models.annotation import (
     AnnotationLayer2Word,
 )
 from app.models.audit import AuditLog
+from app.models.draft import TaskDraft
 from app.models.passage import Passage, PassageToken
 from app.models.recording import Recording
 from app.models.task import Task
@@ -20,5 +21,6 @@ __all__ = [
     "PassageToken",
     "Recording",
     "Task",
+    "TaskDraft",
     "User",
 ]

@@ -15,7 +15,7 @@ from app.models import (
 )
 from app.models.task import LAYER_1, LAYER_2
 from app.schemas import Layer1Submit, Layer2Submit, MarksIn
-from app.services import audit, checkout
+from app.services import audit, checkout, drafts
 from app.services.normalisation import NormalisationError, normalise
 from app.services.taxonomy import ERROR_CODES, INSERTION_CODE, NON_ERROR_CODES
 
@@ -53,6 +53,7 @@ def submit_layer_1(db: Session, user: User, task_id: uuid.UUID, body: Layer1Subm
     )
     db.add(annotation)
     checkout.mark_submitted(task)
+    drafts.discard(db, user.id, task.id)
     db.flush()
     audit.record(
         db, "annotation.submit", user_id=user.id, target_type="annotation_layer_1", target_id=annotation.id,
@@ -124,6 +125,7 @@ def submit_layer_2(db: Session, user: User, task_id: uuid.UUID, body: Layer2Subm
     )
     db.add(annotation)
     checkout.mark_submitted(task)
+    drafts.discard(db, user.id, task.id)
     db.flush()
     audit.record(
         db, "annotation.submit", user_id=user.id, target_type="annotation_layer_2", target_id=annotation.id,
