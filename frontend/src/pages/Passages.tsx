@@ -18,6 +18,19 @@ export function Passages() {
 
   const preview = text.split(/\s+/).filter(Boolean)
 
+  async function onDelete(p: Passage) {
+    if (!window.confirm(`Delete passage ${p.code} (${p.title})? This cannot be undone.`)) return
+    setError(null)
+    setSuccess(null)
+    try {
+      await api.deletePassage(p.id)
+      setPassages((all) => all.filter((x) => x.id !== p.id))
+      setSuccess(`Passage ${p.code} deleted.`)
+    } catch (err) {
+      setError(errorMessage(err))
+    }
+  }
+
   async function onCreate(e: FormEvent) {
     e.preventDefault()
     setError(null)
@@ -86,8 +99,19 @@ export function Passages() {
                 <div className="row">
                   <span>{p.title}</span>
                   <span className="muted small-text">{p.tokens.length} words</span>
+                  <span className="muted small-text">
+                    {p.recording_count === 0 ? 'not used yet' : `used by ${p.recording_count} recording(s)`}
+                  </span>
                   <button className="small" onClick={() => setOpen(open === p.id ? null : p.id)}>
                     {open === p.id ? 'Hide words' : 'Show words'}
+                  </button>
+                  <button
+                    className="small danger"
+                    disabled={p.recording_count > 0}
+                    title={p.recording_count > 0 ? 'Delete the recordings that use this passage first' : 'Delete passage'}
+                    onClick={() => onDelete(p)}
+                  >
+                    Delete
                   </button>
                 </div>
                 {open === p.id && (

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { api, errorMessage } from '../api/client'
+import { api, ApiError, errorMessage } from '../api/client'
 import type { RecordingRow, Stats } from '../api/types'
 import { Alert } from '../components/Alert'
 
@@ -33,6 +33,24 @@ export function AdminDashboard() {
     if (!reason?.trim()) return
     try {
       await api.withdraw(rec.id, reason.trim())
+      await load()
+    } catch (err) {
+      setError(errorMessage(err))
+    }
+  }
+
+  async function remove(rec: RecordingRow) {
+    if (!window.confirm(`Delete recording ${rec.source_ref}? This permanently removes the audio file and its tasks.`)) return
+    setError(null)
+    try {
+      try {
+        await api.deleteRecording(rec.id)
+      } catch (err) {
+        // 409: it has submitted annotations, which are ground truth. Ask again.
+        if (!(err instanceof ApiError && err.status === 409)) throw err
+        if (!window.confirm(`${err.message}.\n\nDelete the recording AND its submitted annotations permanently?`)) return
+        await api.deleteRecording(rec.id, true)
+      }
       await load()
     } catch (err) {
       setError(errorMessage(err))
@@ -90,11 +108,14 @@ export function AdminDashboard() {
                 <td><StatusBadge status={r.task_statuses.layer_1} /></td>
                 <td><StatusBadge status={r.task_statuses.layer_2} /></td>
                 <td>
-                  {r.withdrawn_at ? (
-                    <span className="muted small-text" title={r.withdrawn_reason ?? ''}>withdrawn</span>
-                  ) : (
-                    <button className="small danger" onClick={() => withdraw(r)}>Withdraw</button>
-                  )}
+                  <div className="row">
+                    {r.withdrawn_at ? (
+                      <span className="muted small-text" title={r.withdrawn_reason ?? ''}>withdrawn</span>
+                    ) : (
+                      <button className="small danger" onClick={() => withdraw(r)}>Withdraw</button>
+                    )}
+                    <button className="small danger" onClick={() => remove(r)}>Delete</button>
+                  </div>
                 </td>
               </tr>
             ))}

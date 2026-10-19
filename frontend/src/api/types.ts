@@ -26,6 +26,8 @@ export interface Passage {
   urdu_text: string
   created_at: string
   tokens: Token[]
+  /** Recordings using this passage; deletion is only allowed at 0. */
+  recording_count: number
 }
 
 export interface ScanFile {

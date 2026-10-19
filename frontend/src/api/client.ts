@@ -37,6 +37,7 @@ const get = <T>(path: string) => request<T>('GET', path)
 const post = <T>(path: string, body?: unknown) => request<T>('POST', path, body ?? {})
 const patch = <T>(path: string, body: unknown) => request<T>('PATCH', path, body)
 const put = <T>(path: string, body: unknown) => request<T>('PUT', path, body)
+const del = (path: string) => request<void>('DELETE', path)
 
 export const api = {
   login: (email: string, password: string) => post<Me>('/api/auth/login', { email, password }),
@@ -46,6 +47,7 @@ export const api = {
   stats: () => get<Stats>('/api/admin/stats'),
   recordings: () => get<RecordingRow[]>('/api/admin/recordings'),
   withdraw: (id: string, reason: string) => post(`/api/admin/recordings/${id}/withdraw`, { reason }),
+  deleteRecording: (id: string, force = false) => del(`/api/admin/recordings/${id}${force ? '?force=true' : ''}`),
 
   users: () => get<UserRow[]>('/api/admin/users'),
   createUser: (body: { email: string; password: string; can_layer_1: boolean; can_layer_2: boolean }) =>
@@ -57,6 +59,7 @@ export const api = {
   passages: () => get<Passage[]>('/api/admin/passages'),
   createPassage: (body: { code: string; title: string; urdu_text: string }) =>
     post<Passage>('/api/admin/passages', body),
+  deletePassage: (id: string) => del(`/api/admin/passages/${id}`),
 
   scan: () => get<ScanFile[]>('/api/admin/ingest/scan'),
   ingest: (filename: string, body: Record<string, unknown>) =>
