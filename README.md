@@ -121,6 +121,9 @@ Copy a few short `.wav` or `.mp3` files into `data/incoming/`. `.m4a`, `.ogg`, `
 - **Layer 2**: one row per printed word, with a Correct/Error chip and the closed Annex E.1 error-tag list.
   Use **+ Insert word here** between rows to record words the child added (INS).
 - An admin can withdraw a recording from the Dashboard. This deletes the audio, cancels its tasks, and excludes it from exports.
+- An admin can also **delete** a recording from the Dashboard. This removes it completely: audio, tasks, drafts and
+  annotations (a recording with submitted annotations asks for a second confirmation). Use it for mistaken ingests.
+- A passage can be deleted from **Passages** only while no recording uses it.
 
 ## Running the tests
 
