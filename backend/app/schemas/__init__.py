@@ -77,6 +77,8 @@ class PassageOut(ORMModel):
     urdu_text: str
     created_at: datetime
     tokens: list[TokenOut]
+    # Recordings (including withdrawn ones) that use this passage; >0 blocks deletion.
+    recording_count: int = 0
 
 
 # --- ingestion / recordings -------------------------------------------------
