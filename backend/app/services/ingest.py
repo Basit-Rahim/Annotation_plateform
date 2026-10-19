@@ -1,4 +1,4 @@
-"""Drop-folder audio ingestion and recording withdrawal."""
+"""Drop-folder audio ingestion, recording withdrawal and deletion."""
 
 import shutil
 import uuid
@@ -7,11 +7,21 @@ from pathlib import Path
 
 import mutagen
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
-from app.models import Passage, Recording, Task, User
+from app.models import (
+    AnnotationLayer1,
+    AnnotationLayer2,
+    AnnotationLayer2Insertion,
+    AnnotationLayer2Word,
+    Passage,
+    Recording,
+    Task,
+    TaskDraft,
+    User,
+)
 from app.models._common import utcnow
 from app.models.recording import SOURCE_DROP_FOLDER
 from app.models.task import LAYERS, STATUS_CHECKED_OUT, STATUS_WITHDRAWN
@@ -124,3 +134,49 @@ def withdraw(db: Session, admin: User, recording_id: uuid.UUID, reason: str, ip:
     db.commit()
     (storage_dir() / recording.audio_path).unlink(missing_ok=True)
     return recording
+
+
+def delete_recording(db: Session, admin: User, recording_id: uuid.UUID, force: bool, ip: str | None) -> None:
+    """Remove a recording entirely: audio file, tasks, drafts and annotations.
+
+    Unlike withdraw, nothing is kept. Submitted annotations are ground truth, so
+    deleting a recording that has any requires force=True.
+    """
+    recording = db.scalar(select(Recording).where(Recording.id == recording_id).with_for_update())
+    if recording is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Recording not found")
+    tasks = db.scalars(select(Task).where(Task.recording_id == recording_id).with_for_update()).all()
+    task_ids = [t.id for t in tasks]
+    l2_ids = select(AnnotationLayer2.id).where(AnnotationLayer2.task_id.in_(task_ids))
+    submitted = (
+        db.scalar(select(func.count()).select_from(AnnotationLayer1).where(AnnotationLayer1.task_id.in_(task_ids)))
+        + db.scalar(select(func.count()).select_from(AnnotationLayer2).where(AnnotationLayer2.task_id.in_(task_ids)))
+    )
+    if submitted and not force:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            f"This recording has {submitted} submitted annotation(s); confirm to delete them too",
+        )
+
+    cancelled_checkouts = [str(t.checked_out_by) for t in tasks if t.status == STATUS_CHECKED_OUT]
+    for stmt in (
+        delete(AnnotationLayer2Word).where(AnnotationLayer2Word.annotation_id.in_(l2_ids)),
+        delete(AnnotationLayer2Insertion).where(AnnotationLayer2Insertion.annotation_id.in_(l2_ids)),
+        delete(AnnotationLayer2).where(AnnotationLayer2.task_id.in_(task_ids)),
+        delete(AnnotationLayer1).where(AnnotationLayer1.task_id.in_(task_ids)),
+        delete(TaskDraft).where(TaskDraft.task_id.in_(task_ids)),
+        delete(Task).where(Task.recording_id == recording_id),
+    ):
+        db.execute(stmt.execution_options(synchronize_session=False))
+    audit.record(
+        db, "recording.delete", user_id=admin.id, target_type="recording", target_id=recording_id,
+        meta={
+            "source_ref": recording.source_ref, "passage_id": str(recording.passage_id),
+            "annotations_deleted": submitted, "cancelled_checkouts": cancelled_checkouts,
+        },
+        ip_address=ip,
+    )
+    audio_path = storage_dir() / recording.audio_path
+    db.delete(recording)
+    db.commit()
+    audio_path.unlink(missing_ok=True)

@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload
 
@@ -69,3 +69,11 @@ def withdraw(
     db: Session = Depends(get_db), admin: User = Depends(require_admin),
 ) -> Recording:
     return ingest_service.withdraw(db, admin, recording_id, body.reason, client_ip(request))
+
+
+@router.delete("/recordings/{recording_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_recording(
+    recording_id: uuid.UUID, request: Request, force: bool = Query(False),
+    db: Session = Depends(get_db), admin: User = Depends(require_admin),
+) -> None:
+    ingest_service.delete_recording(db, admin, recording_id, force, client_ip(request))
