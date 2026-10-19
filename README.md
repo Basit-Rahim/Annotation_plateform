@@ -94,7 +94,8 @@ docker compose -f docker-compose.prod.yml exec -T postgres   pg_restore --clean 
 ## First-run flow
 
 1. Open http://localhost:5173 and log in with `ADMIN_EMAIL` / `ADMIN_PASSWORD`.
-2. **Passages**: create a passage (code such as `P01`, a title, and the Urdu text). It is split into numbered words on whitespace.
+2. **Passages**: the 16 built-in passages (P01–P16, from `backend/app/data/passages.json`) are added automatically on startup.
+   You can also create more (a code, a title, and the Urdu text); text is split into numbered words on whitespace.
 3. **Users**: create an annotator and tick Layer 1 and/or Layer 2 eligibility.
 4. Copy audio into `data/incoming/` (see below), open **Ingest audio**, click **Scan folder**, then **Ingest** a file and fill in its metadata.
    The file moves to `data/audio/{recording_id}.{ext}`, and one Layer 1 task and one Layer 2 task enter the pool.
