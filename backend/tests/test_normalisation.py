@@ -12,7 +12,7 @@ from app.services.normalisation import (
 
 
 def test_version_is_semver():
-    assert NORMALISATION_VERSION == "1.0.0"
+    assert NORMALISATION_VERSION == "1.1.0"
 
 
 # Rule 1: NFC
@@ -93,9 +93,38 @@ def test_number_table_covers_0_to_100():
     assert sorted(NUMBER_WORDS) == list(range(101))
 
 
-def test_numbers_above_100_raise():
+@pytest.mark.parametrize(
+    "digits, words",
+    [
+        ("1947", "انیس سو سینتالیس"),  # years in the built-in passages
+        ("1857", "اٹھارہ سو ستاون"),
+        ("1906", "انیس سو چھ"),
+        ("1979", "انیس سو اناسی"),
+        ("1800", "اٹھارہ سو"),
+        ("2002", "دو ہزار دو"),
+        ("2007", "دو ہزار سات"),
+        ("2026", "دو ہزار چھبیس"),
+        ("200", "دو سو"),
+        ("101", "ایک سو ایک"),
+        ("1000", "ایک ہزار"),
+        ("1100", "گیارہ سو"),
+        ("2100", "دو ہزار ایک سو"),
+        ("2500", "دو ہزار پانچ سو"),
+        ("9999", "نو ہزار نو سو ننانوے"),
+        ("1050", "ایک ہزار پچاس"),
+    ],
+)
+def test_numbers_above_100(digits, words):
+    assert normalise(digits) == words
+
+
+def test_urdu_digit_year():
+    assert normalise("۱۹۴۷ میں") == "انیس سو سینتالیس میں"
+
+
+def test_numbers_above_9999_raise():
     with pytest.raises(NormalisationError):
-        normalise("2024")
+        normalise("10000")
 
 
 # Rule 11: compound verbs

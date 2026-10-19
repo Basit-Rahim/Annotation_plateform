@@ -116,7 +116,7 @@ def test_full_flow(drop_dir, storage_dir):
     assert r.status_code == 200
     assert "attachment" in r.headers["content-disposition"]
     data = json.loads(r.content.decode("utf-8"))
-    assert data["normalisation_version"] == "1.0.0"
+    assert data["normalisation_version"] == "1.1.0"
     assert data["schema_version"]
     [rec] = data["recordings"]
     [l2] = rec["annotations"]["layer_2"]

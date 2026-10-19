@@ -7,7 +7,7 @@ below changes, since exported data records the version it was produced with.
 import re
 import unicodedata
 
-NORMALISATION_VERSION = "1.0.0"
+NORMALISATION_VERSION = "1.1.0"  # 1.1.0: rule 10 extended to 0-9999 (years)
 
 # Rule 2
 _ZERO_WIDTH = str.maketrans("", "", "‌‍")
@@ -40,7 +40,9 @@ _DIACRITICS = str.maketrans("", "", "َُِّْٰ")
 # Rule 9: Urdu full stop, Arabic comma, Arabic question mark.
 _PUNCTUATION = str.maketrans("", "", "۔،؟")
 
-# Rule 10: digits (ASCII and Urdu-Indic) -> Urdu number words, 0-100.
+# Rule 10: digits (ASCII and Urdu-Indic) -> Urdu number words, 0-9999.
+# 0-100 come from the table below; larger numbers are composed the way they
+# are read aloud, so years work: 1947 -> انیس سو سینتالیس, 2007 -> دو ہزار سات.
 _URDU_DIGITS = str.maketrans("۰۱۲۳۴۵۶۷۸۹", "0123456789")
 _DIGIT_RUN = re.compile(r"[0-9۰-۹]+")
 NUMBER_WORDS: dict[int, str] = {
@@ -92,11 +94,27 @@ def _collapse_ws(text: str) -> str:
     return _WHITESPACE.sub(" ", text).strip()
 
 
+HUNDRED = "سو"
+THOUSAND = "ہزار"
+MAX_NUMBER = 9999
+
+
+def number_words(value: int) -> str:
+    """Urdu words for 0-9999, as read aloud. 1100-1999 use the hundreds form
+    (1947 = انیس سو سینتالیس, not ایک ہزار نو سو ...), as for years."""
+    if value in NUMBER_WORDS:
+        return NUMBER_WORDS[value]
+    if not 0 <= value <= MAX_NUMBER:
+        raise NormalisationError(f"number {value} is outside the supported range 0-{MAX_NUMBER}; write it in words")
+    if value < 1000 or 1100 <= value < 2000:
+        head, rest = f"{NUMBER_WORDS[value // 100]} {HUNDRED}", value % 100
+    else:
+        head, rest = f"{NUMBER_WORDS[value // 1000]} {THOUSAND}", value % 1000
+    return head if rest == 0 else f"{head} {number_words(rest) if rest != 100 else 'ایک ' + HUNDRED}"
+
+
 def _number_to_words(match: re.Match[str]) -> str:
-    value = int(match.group(0).translate(_URDU_DIGITS))
-    if value not in NUMBER_WORDS:
-        raise NormalisationError(f"number {value} is outside the supported range 0-100; write it in words")
-    return f" {NUMBER_WORDS[value]} "
+    return f" {number_words(int(match.group(0).translate(_URDU_DIGITS)))} "
 
 
 def normalise(text: str) -> str:
