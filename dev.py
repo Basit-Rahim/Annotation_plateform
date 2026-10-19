@@ -103,11 +103,15 @@ def start_postgres(env: dict[str, str]) -> None:
         log("Postgres already running")
     else:
         log(f"starting Postgres on localhost:{port}")
-        subprocess.run(
+        # The server outlives this call and would inherit any of our std handles,
+        # keeping a caller's pipe (`uv run dev.py db | tee ...`) open forever.
+        started = subprocess.run(
             [pg("pg_ctl"), "-D", str(PGDATA), "-l", str(LOCAL / "postgres.log"), "-w",
              "-o", f"-p {port} -h localhost", "start"],
-            check=True, stdout=subprocess.DEVNULL,
+            stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         )
+        if started.returncode != 0:
+            sys.exit("Postgres failed to start; see .local/postgres.log")
 
     pg_env = {**os.environ, "PGPASSWORD": password}
     psql = [pg("psql"), "-h", "127.0.0.1", "-p", str(port), "-U", user, "-d", "postgres", "-tAc"]
