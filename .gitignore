@@ -5,8 +5,8 @@
 
 # --- Local runtime state (dev.py) ---
 .local/
-data/
-backups/
+/data/
+/backups/
 *.log
 
 # --- Python ---
@@ -30,6 +30,7 @@ dist/
 npm-debug.log*
 
 # --- Editors / OS ---
+~$*
 .vscode/
 .idea/
 *.swp
